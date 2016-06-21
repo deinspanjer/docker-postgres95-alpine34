@@ -9,7 +9,7 @@ The package installation portion is much simpler than the debian based one found
 # docker-entrypoint.sh
 The entrypoint script is also very similar to the official image.  Changes of interest are:
 * Uses su-exec instead of gosu since su-exec is available as a package in Alpine
-* Checks for the existance of /postgresql.conf and if found, replaces the default one in the PGDATA directory with it.
+* Adds an include_if_exists directive to the $PGDATA/postgresql.conf file so the user can put their own config in /etc/postgresql/postgresql.conf
 
 
 [1]: https://github.com/docker-library/docs/tree/master/postgres

@@ -88,11 +88,7 @@ if [ "$1" = 'postgres' ]; then
 
 		su-exec postgres pg_ctl -D "$PGDATA" -m fast -w stop
 
-        if [ -s "/postgresql.conf" ]; then
-            echo "Overriding postgresql.conf with custom file from build."
-            mv -v /postgresql.conf "$PGDATA/"
-            chown -R postgres "$PGDATA/postgresql.conf"
-        fi
+        { echo; echo "include_if_exists = '/etc/postgres/postgresql.conf'"; } >> "$PGDATA/postgresql.conf"
 
 		echo
 		echo 'PostgreSQL init process complete; ready for start up.'
