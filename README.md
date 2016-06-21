@@ -3,10 +3,10 @@ A Docker build based on the official postgres but using alpine 3.4 to reduce siz
 
 See the official [docker-library for postgres docs][1] for usage readme and [their original Dockerfile][2] for more details.
 
-== Dockerfile ==
+# Dockerfile
 The package installation portion is much simpler than the debian based one found in the official Postgres version.  After installing packages, it performs the other actions similar to the offical image.
 
-== docker-entrypoint.sh ==
+# docker-entrypoint.sh
 The entrypoint script is also very similar to the official image.  Changes of interest are:
 * Uses su-exec instead of gosu since su-exec is available as a package in Alpine
 * Checks for the existance of /postgresql.conf and if found, replaces the default one in the PGDATA directory with it.
