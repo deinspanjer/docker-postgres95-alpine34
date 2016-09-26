@@ -96,7 +96,8 @@ elif [ "$1" = 'postgres' ]; then
 	exec su-exec postgres "$@"
 else
     echo 'Running as a data volume container.  To persist the data in a host directory, run with --volume <hostdir>:/var/lib/postgresql/data'
-    return true;
+
+	set -- /bin/true
 fi
 
 exec "$@"
