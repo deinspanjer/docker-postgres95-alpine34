@@ -3,9 +3,7 @@ set -e
 
 if [ "${1:0:1}" = '-' ]; then
 	set -- postgres "$@"
-fi
-
-if [ "$1" = 'postgres' ]; then
+elif [ "$1" = 'postgres' ]; then
 	mkdir -p "$PGDATA"
 	chmod 700 "$PGDATA"
 	chown -R postgres "$PGDATA"
@@ -88,7 +86,7 @@ if [ "$1" = 'postgres' ]; then
 
 		su-exec postgres pg_ctl -D "$PGDATA" -m fast -w stop
 
-        { echo; echo "include_if_exists = '/etc/postgres/postgresql.conf'"; } >> "$PGDATA/postgresql.conf"
+        { echo; echo "include_if_exists = '/etc/postgresql/postgresql.conf'"; } >> "$PGDATA/postgresql.conf"
 
 		echo
 		echo 'PostgreSQL init process complete; ready for start up.'
@@ -96,6 +94,9 @@ if [ "$1" = 'postgres' ]; then
 	fi
 
 	exec su-exec postgres "$@"
+else
+    echo 'Running as a data volume container.  To persist the data in a host directory, run with --volume <hostdir>:/var/lib/postgresql/data'
+    return true;
 fi
 
 exec "$@"
