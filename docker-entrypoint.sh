@@ -13,13 +13,15 @@ elif [ "$1" = 'postgres' ]; then
 
 	# look specifically for PG_VERSION, as it is expected in the DB dir
 	if [ ! -s "$PGDATA/PG_VERSION" ]; then
-		eval "su-exec postgres initdb $POSTGRES_INITDB_ARGS"
+        : ${POSTGRES_USER:=postgres}
 
 		# check password first so we can output the warning before postgres
 		# messes it up
 		if [ "$POSTGRES_PASSWORD" ]; then
-			pass="PASSWORD '$POSTGRES_PASSWORD'"
-			authMethod=md5
+            echo "$POSTGRES_PASSWORD" > /tmp/.pwfile
+            PWFILEARG="--pwfile=/tmp/.pwfile"
+            echo "*:*:*:$POSTGRES_USER:$POSTGRES_PASSWORD" > ~/.pgpass
+            chmod 600 ~/.pgpass
 		else
 			# The - option suppresses leading tabs but *not* spaces. :)
 			cat >&2 <<-'EOWARN'
@@ -35,12 +37,12 @@ elif [ "$1" = 'postgres' ]; then
 				         it in "docker run".
 				****************************************************
 			EOWARN
-
-			pass=
-			authMethod=trust
 		fi
 
-		{ echo; echo "host all all 0.0.0.0/0 $authMethod"; } >> "$PGDATA/pg_hba.conf"
+		eval "su-exec postgres initdb $PWFILEARG $POSTGRES_INITDB_ARGS"
+
+        #host    all             all             127.0.0.1/32            md5
+        sed -rni "p; s/^(host +all +all +)127\.0\.0\.1\/32(.*)$/\1  0.0.0.0\/0 \2/p" "$PGDATA/pg_hba.conf"
 
 		# internal start of server in order to allow set-up using psql-client		
 		# does not listen on external TCP/IP and waits until start finishes
@@ -55,21 +57,11 @@ elif [ "$1" = 'postgres' ]; then
 		psql=( psql -v ON_ERROR_STOP=1 )
 
 		if [ "$POSTGRES_DB" != 'postgres' ]; then
-			"${psql[@]}" --username postgres <<-EOSQL
+			"${psql[@]}" --username $POSTGRES_USER <<-EOSQL
 				CREATE DATABASE "$POSTGRES_DB" ;
 			EOSQL
 			echo
 		fi
-
-		if [ "$POSTGRES_USER" = 'postgres' ]; then
-			op='ALTER'
-		else
-			op='CREATE'
-		fi
-		"${psql[@]}" --username postgres <<-EOSQL
-			$op USER "$POSTGRES_USER" WITH SUPERUSER $pass ;
-		EOSQL
-		echo
 
 		psql+=( --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" )
 
